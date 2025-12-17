@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>FFPS Mini – Tasks with Day Progress</title>
+<style>
+:root{--bg:#000;--panel:#141414;--ui:#1f1f1f;--border:#3a3a3a;--txt:#d0d0d0;--ok:#4ab86a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:monospace}
+.wrapper{width:620px;height:400px;margin:12px auto;border:3px solid var(--border);background:var(--panel);display:flex;flex-direction:column}
+.top{height:32px;background:var(--ui);display:flex;justify-content:space-between;align-items:center;padding:0 8px;font-size:12px}
+.main{flex:1;display:grid;grid-template-columns:1fr;gap:8px;padding:8px}
+.tasks{border:2px solid var(--border);padding:6px;overflow:auto}
+.task{border:1px solid #555;padding:6px;margin-bottom:6px;cursor:pointer;font-size:12px;position:relative}
+.task:hover{background:#2a2a2a}
+.log{font-size:11px;min-height:44px}
+.progress-bar{height:6px;width:100%;background:#333;margin-top:4px}
+.progress-bar span{display:block;height:100%;width:0;background:var(--ok)}
+.btn{padding:6px;background:#1f1f1f;border:1px solid #555;cursor:pointer;text-align:center}
+.btn:hover{background:#2a2a2a}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="top">
+    <div>FAZBEAR ENT.</div>
+    <div>DAY: <b id="day">1</b> | CASH: $<b id="cash">0</b> | TASKS DONE <b id="tasksDone">0</b></div>
+  </div>
+  <div class="main">
+    <div class="tasks" id="tasks"></div>
+    <div class="log" id="log">Press START DAY</div>
+    <div class="btn" id="startDay">START DAY</div>
+  </div>
+</div>
+<script>
+let tasksDone=0,running=false,busy=false,day=1,cash=0,ctx;
+function beep(f,duration=0.12){ctx=ctx||new AudioContext();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=f;g.gain.value=.08;o.start();g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+duration);o.stop(ctx.currentTime+duration)}const tasksEl=document.getElementById('tasks'); const logEl=document.getElementById('log'); const dayEl=document.getElementById('day'); const cashEl=document.getElementById('cash'); const startBtn=document.getElementById('startDay'); const taskList=[ 'PRINT POSTERS','ORDER SUPPLIES','CLEAN AREA','BALANCE REGISTER', 'RESTOCK SNACKS','CHECK CAMERA','CLEAN WINDOWS','CHECK LIGHTS','SORT INVENTORY','UPDATE LOGS' ];
+
+function genTasks(){ tasksEl.innerHTML=''; tasksDone=0; document.getElementById('tasksDone').textContent=tasksDone; taskList.forEach(name=>{ const d=40000+Math.random()*20000; const div=document.createElement('div'); div.className='task'; div.textContent=name+' ('+Math.round(d/1000)+'s)';
+
+const progressBar=document.createElement('div');
+progressBar.className='progress-bar';
+const progressFill=document.createElement('span');
+progressBar.appendChild(progressFill);
+div.appendChild(progressBar);
+
+div.onclick=()=>runTask(d,name,progressFill);
+tasksEl.appendChild(div);
+
+}); }
+
+function runTask(d,name,progressFill){ if(!running||busy) return; busy=true; logEl.textContent='Working…'; let taskSound=setInterval(()=>beep(1200,0.08),200);
+
+let p=0; const interval=50; const step=(interval/d)*100; const timer=setInterval(()=>{ p+=step; progressFill.style.width=Math.min(p,100)+'%'; },interval);
+
+setTimeout(()=>{ clearInterval(timer); clearInterval(taskSound); busy=false; beep(500); tasksDone++; document.getElementById('tasksDone').textContent=tasksDone; logEl.textContent='Task done';
+
+if(tasksDone===taskList.length){
+  showLogOff();
+}
+
+},d); }
+
+function showLogOff(){ tasksEl.innerHTML=''; logEl.textContent='All tasks done! Press LOG OFF for next day'; const logOffBtn=document.createElement('div'); logOffBtn.className='btn'; logOffBtn.textContent='LOG OFF'; logOffBtn.onclick=nextDay; tasksEl.appendChild(logOffBtn); }
+
+function nextDay(){ day++; cash+=50; dayEl.textContent=day; cashEl.textContent=cash; logEl.textContent='Press START DAY'; startBtn.style.display='block'; tasksEl.innerHTML=''; running=false; }
+
+startBtn.onclick=()=>{ running=true; startBtn.style.display='none'; genTasks(); logEl.textContent='Day started'; }; </script>
+
+</body>
+</html>
